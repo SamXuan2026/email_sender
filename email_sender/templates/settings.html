@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置 - 邮件发送系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        dark: '#1e293b',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .shadow-card {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-envelope text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-dark">邮件发送系统</h1>
+            </div>
+            <div class="flex space-x-4">
+                <a href="/" class="px-3 py-2 text-gray-600 hover:text-primary transition-all-300">首页</a>
+                <a href="/upload" class="px-3 py-2 text-gray-600 hover:text-primary transition-all-300">上传预览</a>
+                <a href="/settings" class="px-3 py-2 text-primary font-medium border-b-2 border-primary">设置</a>
+                <a href="/clear_session" class="px-3 py-2 text-gray-600 hover:text-primary transition-all-300">清除会话</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold text-dark mb-6 flex items-center">
+                <i class="fa fa-cog text-primary mr-2"></i> 邮件服务器设置
+            </h2>
+            
+            <!-- 消息提示 -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                            <div class="bg-blue-100 border-l-4 border-primary text-primary p-4 rounded-r">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <div class="bg-white rounded-xl shadow-card p-6">
+                <form method="POST" action="/settings">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="smtp_server" class="block text-gray-700 font-medium mb-2">SMTP服务器</label>
+                            <input type="text" id="smtp_server" name="smtp_server" 
+                                   value="{{ smtp_server }}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300"
+                                   required>
+                        </div>
+                        <div>
+                            <label for="smtp_port" class="block text-gray-700 font-medium mb-2">SMTP端口</label>
+                            <input type="number" id="smtp_port" name="smtp_port" 
+                                   value="{{ smtp_port }}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300"
+                                   required>
+                        </div>
+                        <div>
+                            <label for="sender_email" class="block text-gray-700 font-medium mb-2">发件人邮箱</label>
+                            <input type="email" id="sender_email" name="sender_email" 
+                                   value="{{ sender_email }}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300"
+                                   required>
+                        </div>
+                        <div>
+                            <label for="sender_password" class="block text-gray-700 font-medium mb-2">邮箱密码/授权码</label>
+                            <input type="password" id="sender_password" name="sender_password" 
+                                   value="{{ sender_password }}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300"
+                                   required>
+                        </div>
+                        <div class="pt-4">
+                            <button type="submit" 
+                                    class="w-full bg-primary hover:bg-blue-600 text-white font-medium py-3 px-6 rounded-lg transition-all-300 flex items-center justify-center">
+                                <i class="fa fa-save mr-2"></i> 保存设置
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <h3 class="text-sm font-semibold text-primary mb-2">设置说明</h3>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li class="flex items-start">
+                        <i class="fa fa-info-circle text-primary mt-1 mr-2"></i>
+                        <span>SMTP服务器：如Gmail使用 smtp.gmail.com</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-info-circle text-primary mt-1 mr-2"></i>
+                        <span>SMTP端口：一般为587（TLS）或465（SSL）</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-info-circle text-primary mt-1 mr-2"></i>
+                        <span>发件人邮箱：用于发送邮件的邮箱地址</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fa fa-info-circle text-primary mt-1 mr-2"></i>
+                        <span>邮箱密码/授权码：某些邮箱（如Gmail）需要使用应用专用密码</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2026 邮件发送系统 - 版权所有</p>
+        </div>
+    </footer>
+</body>
+</html>

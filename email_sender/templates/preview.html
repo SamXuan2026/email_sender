@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>预览表格 - 邮件发送系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                        dark: '#1e293b',
+                        light: '#f8fafc',
+                        success: '#10b981',
+                        error: '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .shadow-card {
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .table-responsive {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+    </style>
+    <script>
+        // 页面加载时确保所有发送表单都是隐藏的
+        document.addEventListener('DOMContentLoaded', function() {
+            const forms = document.querySelectorAll('[id^="send-form-"]');
+            forms.forEach(form => {
+                form.classList.add('hidden');
+            });
+            
+            const statusElements = document.querySelectorAll('[id^="send-status-"]');
+            statusElements.forEach(element => {
+                element.classList.add('hidden');
+            });
+        });
+        
+        function toggleSendForm(rowIndex) {
+            const form = document.getElementById(`send-form-${rowIndex}`);
+            if (form) {
+                form.classList.toggle('hidden');
+            }
+        }
+        
+        // 显示发送状态
+        function showSendStatus(rowIndex, status, message) {
+            const statusElement = document.getElementById(`send-status-${rowIndex}`);
+            if (statusElement) {
+                statusElement.classList.remove('hidden');
+                statusElement.classList.remove('bg-green-100', 'text-green-800', 'border-green-400');
+                statusElement.classList.remove('bg-red-100', 'text-red-800', 'border-red-400');
+                
+                if (status === 'success') {
+                    statusElement.classList.add('bg-green-100', 'text-green-800', 'border-green-400');
+                } else {
+                    statusElement.classList.add('bg-red-100', 'text-red-800', 'border-red-400');
+                }
+                statusElement.innerHTML = message;
+                
+                // 3秒后自动隐藏
+                setTimeout(() => {
+                    statusElement.classList.add('hidden');
+                }, 3000);
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-envelope text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-dark">邮件发送系统</h1>
+            </div>
+            <div class="flex space-x-4">
+                <a href="/" class="px-3 py-2 text-gray-600 hover:text-primary transition-all-300">首页</a>
+                <a href="/upload" class="px-3 py-2 text-primary font-medium border-b-2 border-primary">上传预览</a>
+                <a href="/settings" class="px-3 py-2 text-gray-600 hover:text-primary transition-all-300">设置</a>
+                <a href="/clear_session" class="px-3 py-2 text-gray-600 hover:text-primary transition-all-300">清除会话</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="max-w-5xl mx-auto">
+            <h2 class="text-2xl font-bold text-dark mb-6 flex items-center">
+                <i class="fa fa-table text-primary mr-2"></i> 表格预览
+            </h2>
+            
+            <!-- 消息提示 -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-6 space-y-2">
+                        {% for category, message in messages %}
+                            <div class="{{ 'bg-green-100 border-l-4 border-green-500 text-green-700' if category == 'success' else 'bg-red-100 border-l-4 border-red-500 text-red-700' }} p-4 rounded-r">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <div class="bg-white rounded-xl shadow-card p-6 mb-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-2 sm:space-y-0">
+                    <h3 class="text-lg font-semibold text-dark">文件: {{ filename }}</h3>
+                    <a href="/upload" class="text-primary hover:text-blue-600 flex items-center transition-all-300">
+                        <i class="fa fa-upload mr-1"></i> 重新上传
+                    </a>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                {% for column in columns %}
+                                    <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        {{ column }}
+                                    </th>
+                                {% endfor %}
+                                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    操作
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for row in rows %}
+                                <tr class="hover:bg-gray-50 transition-all-300">
+                                    {% for column in columns %}
+                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                                            {{ row[column] or '' }}
+                                        </td>
+                                    {% endfor %}
+                                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium">
+                                        <button onclick="toggleSendForm({{ loop.index0 }})" 
+                                                class="text-primary hover:text-blue-600 transition-all-300 flex items-center">
+                                            <i class="fa fa-paper-plane mr-1"></i> 发送
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- 发送状态 -->
+                                <tr class="hidden" id="send-status-{{ loop.index0 }}">
+                                    <td colspan="{{ columns|length + 1 }}" class="px-4 py-3">
+                                        <div class="p-3 rounded-lg border"></div>
+                                    </td>
+                                </tr>
+                                <!-- 发送表单 -->
+                                <tr class="hidden" id="send-form-{{ loop.index0 }}">
+                                    <td colspan="{{ columns|length + 1 }}" class="px-4 py-4">
+                                        <div class="bg-gray-50 p-5 rounded-lg border border-gray-200">
+                                            <h4 class="text-sm font-semibold text-gray-700 mb-4">发送邮件到: {{ row[email_column] or '无邮箱地址' }}</h4>
+                                            <form method="POST" action="/send_single">
+                                                <input type="hidden" name="row_index" value="{{ loop.index0 }}">
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label for="subject-{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 mb-1">邮件主题</label>
+                                                        <input type="text" id="subject-{{ loop.index0 }}" name="subject" 
+                                                               value="数据通知" 
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300">
+                                                    </div>
+                                                    <div>
+                                                        <label for="smtp_server-{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 mb-1">SMTP服务器</label>
+                                                        <input type="text" id="smtp_server-{{ loop.index0 }}" name="smtp_server" 
+                                                               value="{{ session.get('smtp_server', 'smtp.gmail.com') }}" 
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300">
+                                                    </div>
+                                                    <div>
+                                                        <label for="smtp_port-{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 mb-1">SMTP端口</label>
+                                                        <input type="number" id="smtp_port-{{ loop.index0 }}" name="smtp_port" 
+                                                               value="{{ session.get('smtp_port', '587') }}" 
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300">
+                                                    </div>
+                                                    <div>
+                                                        <label for="sender_email-{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 mb-1">发件人邮箱</label>
+                                                        <input type="email" id="sender_email-{{ loop.index0 }}" name="sender_email" 
+                                                               value="{{ session.get('sender_email', '') }}" 
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300" required>
+                                                    </div>
+                                                    <div class="md:col-span-2">
+                                                        <label for="sender_password-{{ loop.index0 }}" class="block text-sm font-medium text-gray-700 mb-1">邮箱密码/授权码</label>
+                                                        <input type="password" id="sender_password-{{ loop.index0 }}" name="sender_password" 
+                                                               value="{{ session.get('sender_password', '') }}" 
+                                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all-300" required>
+                                                    </div>
+                                                </div>
+                                                <div class="mt-5 flex space-x-3">
+                                                    <button type="submit" 
+                                                            class="bg-primary hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all-300 flex items-center">
+                                                        <i class="fa fa-paper-plane mr-1"></i> 发送
+                                                    </button>
+                                                    <button type="button" onclick="toggleSendForm({{ loop.index0 }})" 
+                                                            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all-300">
+                                                        取消
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2026 邮件发送系统 - 版权所有</p>
+        </div>
+    </footer>
+
+</body>
+</html>
