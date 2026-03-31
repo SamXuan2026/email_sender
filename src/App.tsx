@@ -15,6 +15,8 @@ interface DataRow {
   email?: string
 }
 
+const API_BASE_URL = 'http://172.16.1.32:5004'
+
 const App: React.FC = () => {
   const [, setFile] = useState<File | null>(null)
   const [data, setData] = useState<DataRow[]>([])
@@ -124,7 +126,7 @@ const App: React.FC = () => {
           formData.append('email_column', newEmailColumn)
           formData.append('data', JSON.stringify(data))
           
-          fetch('http://127.0.0.1:5004/upload_data', {
+          fetch(`${API_BASE_URL}/upload_data`, {
             method: 'POST',
             body: formData
           })
@@ -168,7 +170,7 @@ const App: React.FC = () => {
       formData.append('sender_email', emailServerConfig.smtpUsername)
       formData.append('sender_password', emailServerConfig.smtpPassword)
 
-      const response = await fetch('http://127.0.0.1:5004/send_test_email', {
+      const response = await fetch(`${API_BASE_URL}/send_test_email`, {
         method: 'POST',
         body: formData
       })
@@ -224,7 +226,7 @@ const App: React.FC = () => {
       formData.append('sender_email', emailServerConfig.smtpUsername)
       formData.append('sender_password', emailServerConfig.smtpPassword)
 
-      const response = await fetch('http://127.0.0.1:5004/send_single', {
+      const response = await fetch(`${API_BASE_URL}/send_single`, {
         method: 'POST',
         body: formData
       })
@@ -381,7 +383,7 @@ const App: React.FC = () => {
                       formData.append('email_column', newEmailColumn)
                       formData.append('data', JSON.stringify(data))
                       
-                      fetch('http://127.0.0.1:5004/upload_data', {
+                      fetch(`${API_BASE_URL}/upload_data`, {
                         method: 'POST',
                         body: formData
                       })

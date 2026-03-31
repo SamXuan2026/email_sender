@@ -11,6 +11,7 @@ import json
 
 app = Flask(__name__, static_folder='../dist', static_url_path='')
 app.secret_key = 'supersecretkey1234567890abcdef'
+HOST_IP = '172.16.1.32'
 
 # 启用CORS支持
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -555,4 +556,4 @@ def clear_session():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5004)
+    app.run(debug=True, host=HOST_IP, port=5004)

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>红点吞噬者</title>
+</head>
+<body style="margin:0;overflow:hidden;background:#111;">
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas=document.getElementById("gameCanvas");
+        const ctx=canvas.getContext("2d");
+        canvas.width=window.innerWidth;
+        canvas.height=window.innerHeight;
+        
+        const player={
+            x:canvas.width/2,
+            y:canvas.height/2,
+            radius:12,
+            color:"#ff4757",
+            speed:5,
+            score:0,
+            level:1
+        };
+        
+        const enemies=[];
+        const enemyCount=25;
+        
+        for(let i=0;i<enemyCount;i++){
+            enemies.push({
+                x:Math.random()*canvas.width,
+                y:Math.random()*canvas.height,
+                radius:5+Math.random()*25,
+                color:"#3742fa",
+                speed:1+Math.random()*2
+            });
+        }
+        
+        const keys={};
+        
+        document.addEventListener("keydown",(e)=>{
+            keys[e.key.toLowerCase()]=true;
+        });
+        
+        document.addEventListener("keyup",(e)=>{
+            keys[e.key.toLowerCase()]=false;
+        });
+        
+        function drawPlayer(){
+            ctx.beginPath();
+            ctx.arc(player.x,player.y,player.radius,0,Math.PI*2);
+            ctx.fillStyle=player.color;
+            ctx.fill();
+            ctx.strokeStyle="#fff";
+            ctx.lineWidth=2;
+            ctx.stroke();
+        }
+        
+        function drawEnemies(){
+            enemies.forEach(enemy=>{
+                ctx.beginPath();
+                ctx.arc(enemy.x,enemy.y,enemy.radius,0,Math.PI*2);
+                ctx.fillStyle=enemy.color;
+                ctx.fill();
+                ctx.strokeStyle="#fff";
+                ctx.lineWidth=1;
+                ctx.stroke();
+            });
+        }
+        
+        function movePlayer(){
+            if(keys["w"]||keys["arrowup"]){player.y-=player.speed;}
+            if(keys["s"]||keys["arrowdown"]){player.y+=player.speed;}
+            if(keys["a"]||keys["arrowleft"]){player.x-=player.speed;}
+            if(keys["d"]||keys["arrowright"]){player.x+=player.speed;}
+            
+            player.x=Math.max(player.radius,Math.min(canvas.width-player.radius,player.x));
+            player.y=Math.max(player.radius,Math.min(canvas.height-player.radius,player.y));
+        }
+        
+        function moveEnemies(){
+            enemies.forEach(enemy=>{
+                enemy.x+=(Math.random()-0.5)*enemy.speed;
+                enemy.y+=(Math.random()-0.5)*enemy.speed;
+                
+                enemy.x=Math.max(enemy.radius,Math.min(canvas.width-enemy.radius,enemy.x));
+                enemy.y=Math.max(enemy.radius,Math.min(canvas.height-enemy.radius,enemy.y));
+            });
+        }
+        
+        function checkCollisions() {
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < player.radius + enemy.radius) {
+                    if (player.radius > enemy.radius) {
+                        player.score += Math.floor(enemy.radius);
+                        player.radius += enemy.radius * 0.15;
+                        
+                        if (player.score >= player.level * 100) {
+                            player.level++;
+                            player.speed += 0.2;
+                            alert('升级啦！当前等级: ' + player.level);
+                        }
+                        
+                        enemies.splice(i, 1);
+                        enemies.push({
+                            x: Math.random() * canvas.width,
+                            y: Math.random() * canvas.height,
+                            radius: 5 + Math.random() * 25,
+                            color: "#3742fa",
+                            speed: 1 + Math.random() * 2
+                        });
+                    } else {
+                        alert('游戏结束！最终得分: ' + player.score + '，等级: ' + player.level + '\n\n刷新页面重新开始！');
+                        document.location.reload();
+                    }
+                }
+            }
+        }
+        
+        function drawUI(){
+            ctx.fillStyle="#fff";
+            ctx.font="24px Arial";
+            ctx.fillText(`得分: ${player.score} | 等级: ${player.level}`,20,40);
+        }
+        
+        function gameLoop(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            drawUI();
+            movePlayer();
+            moveEnemies();
+            checkCollisions();
+            drawPlayer();
+            drawEnemies();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
+    </script>
+</body>
+</html>
