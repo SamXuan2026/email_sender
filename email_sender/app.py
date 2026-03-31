@@ -10,7 +10,7 @@ import datetime
 import json
 
 app = Flask(__name__, static_folder='../dist', static_url_path='')
-app.secret_key = 'supersecretkey1234567890abcdef'
+app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
 HOST_IP = '172.16.1.32'
 
 # 启用CORS支持
@@ -168,14 +168,14 @@ def settings():
         smtp_server = request.form.get('smtp_server')
         smtp_port = request.form.get('smtp_port')
         sender_email = request.form.get('sender_email')
+        # sender_password 仅用于当前请求，不在持久存储中保存
         sender_password = request.form.get('sender_password')
         
         # 这里可以将设置保存到数据库或配置文件
-        # 暂时使用会话存储
+        # 暂时使用会话存储，但不保存敏感密码
         session['smtp_server'] = smtp_server
         session['smtp_port'] = smtp_port
         session['sender_email'] = sender_email
-        session['sender_password'] = sender_password
         
         flash('设置保存成功！')
         return redirect(url_for('settings'))
@@ -184,7 +184,7 @@ def settings():
     smtp_server = session.get('smtp_server', 'smtp.gmail.com')
     smtp_port = session.get('smtp_port', '587')
     sender_email = session.get('sender_email', '')
-    sender_password = session.get('sender_password', '')
+    sender_password = ''
     
     return send_from_directory('../dist', 'index.html')
 
